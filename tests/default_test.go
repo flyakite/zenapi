@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"testing"
 	// "zenapi/controllers"
+	"github.com/dchest/uniuri"
 	"github.com/gorilla/websocket"
 	. "github.com/smartystreets/goconvey/convey"
 	_ "zenapi/routers"
@@ -125,4 +126,23 @@ func TestMessageEventClientJoined(t *testing.T) {
 		})
 	})
 
+}
+
+func TestUniuri(t *testing.T) {
+	s := uniuri.NewLen(20)
+	s2 := uniuri.NewLenChars(20, []byte("abcdefg"))
+	beego.Debug(s)
+	beego.Debug(s2)
+	Convey("Subject: Test Uniuri", t, func() {
+		So(len(s), ShouldEqual, 20)
+	})
+}
+
+func TestAny(t *testing.T) {
+	var s uint
+	s = -0
+	beego.Debug(s)
+	Convey("Subject: Test Any", t, func() {
+		So(s, ShouldEqual, 0)
+	})
 }
