@@ -76,3 +76,35 @@ func TestSignal(t *testing.T) {
 		})
 	})
 }
+
+func TestProxySignal(t *testing.T) {
+	token := "wrghkjrgklkj4l2kl45"
+	postData := url.Values{}
+	postData.Set("sender", "sender@asdf.com")
+	postData.Add("token", token)
+	postData.Add("subject", "Hello Nice")
+	postData.Add("body", "Hello Nice, this is James")
+	postData.Add("to", `Ha <user1@asdf.com>,"M A"<user2@asdf.com>`)
+	postData.Add("cc", "user3@asdf.com")
+	postData.Add("bcc", "")
+	postData.Add("links", `[{"url":"http://www.google.com", "urlHash":"-57483835", "urlDecode":"http://www.google.com", "plain": true}]`)
+	postData.Add("tz_offset", "9")
+	postData.Add("timezoneinfo", "Japan")
+	postData.Add("debug", "1")
+	beego.Debug(postData.Encode())
+	req, _ := http.NewRequest("POST", "/zenapi/proxy/signal", bytes.NewBufferString(postData.Encode()))
+	// req, _ := http.NewRequest("POST", "/zenapi/signal", strings.NewReader(postData.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(postData.Encode())))
+	w := httptest.NewRecorder()
+	beego.BeeApp.Handlers.ServeHTTP(w, req)
+
+	beego.Trace("testing", "TestMain", "Code[%d]\n%s", w.Code, w.Body.String())
+	fmt.Println(w.Body.String())
+
+	Convey("Subject: Test Send Proxy Signal\n", t, func() {
+		Convey("Add Proxy Signal Return Code Should Be 200", func() {
+			So(w.Code, ShouldEqual, 200)
+		})
+	})
+}

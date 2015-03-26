@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/json"
+	"net/http"
+	"net/url"
 	// "fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
@@ -263,7 +266,7 @@ func (this *SignalImageController) GetSignalImage() {
 		return
 	}
 	beego.Info(token)
-	signal := Signal()
+	signal := Signal{}
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(Signal))
 	err := qs.Filter("token", token).One(&signal)
@@ -285,8 +288,64 @@ func recognizeUser(signal *Signal) {
 	receiverEmails := strings.Split(signal.ReceiverEmails, SIGNAL_RECEIVER_EMAILS_SEPERATOR)
 	beego.Info(len(receiverEmails), " ", receiverEmails)
 	if len(receiverEmails) == 1 {
-		email := receiverEmails[0]
+		//TODO
+		return
 	} else {
 		return
 	}
+}
+
+type ProxySignalController struct {
+	BaseController
+}
+
+func (this *ProxySignalController) AddSignal() {
+	beego.Info(this.Input())
+	beego.Info(this.Ctx.Input.RequestBody)
+
+	version := this.GetString("version")
+	debuginfo := this.GetString("debuginfo")
+	tzOffset := this.GetString("tz_offset")
+	timezoneinfo := this.GetString("timezoneinfo")
+	token := this.GetString("token")
+	sender := this.GetString("sender")
+	subject := this.GetString("subject")
+	// body := this.GetString("body")
+	outlook := this.GetString("outlook")
+	links := this.GetString("links")
+	debug := this.GetString("debug")
+	var receivers = make(map[string]string)
+	for _, v := range SIGNAL_RECEIVER_KEYS {
+		receivers[v] = this.GetString(v)
+	}
+
+	trackerURL := "https://zenblip.appspot.com"
+	path := "/signals/add"
+	postData := url.Values{}
+	postData.Set("version", version)
+	postData.Add("debuginfo", debuginfo)
+	postData.Add("tz_offset", tzOffset)
+	postData.Add("timezoneinfo", timezoneinfo)
+	postData.Add("token", token)
+	postData.Add("sender", sender)
+	postData.Add("subject", subject)
+	postData.Add("outlook", outlook)
+	postData.Add("links", links)
+	if debug != "" {
+		path = "/signals/debug"
+	}
+	for k, v := range receivers {
+		postData.Add(k, v)
+	}
+
+	req, _ := http.NewRequest("POST", trackerURL+path, bytes.NewBufferString(postData.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(postData.Encode())))
+
+	client := &http.Client{}
+	resp, _ := client.Do(req)
+	beego.Info(resp.Status)
+	this.Data["json"] = `{"success":1}`
+	this.ServeJson()
+	return
 }

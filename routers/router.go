@@ -11,4 +11,6 @@ func init() {
 	beego.Router("/messageevent/joinclient", &controllers.MessageEventController{}, "get:JoinClient")
 	beego.Router("/zenapi/signal", &controllers.SignalController{}, "post:AddSignal")
 	beego.Router("/s/s.gif", &controllers.SignalImageController{}, "get:GetSignalImage")
+
+	beego.Router("/zenapi/proxy/signal", &controllers.ProxySignalController{}, "post:AddSignal")
 }
